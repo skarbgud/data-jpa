@@ -335,4 +335,47 @@ class MemberRepositoryTest {
 
         assertThat(result.get(0).getUsername()).isEqualTo("m1");
     }
+
+    @Test
+    public void projections() {
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member m1 = new Member("m1", 0, teamA);
+        Member m2 = new Member("m2", 0, teamA);
+        em.persist(m1);
+        em.persist(m2);
+
+        em.flush();
+        em.clear();
+
+        //when
+//        List<UsernameOnlyDto> result = memberRepository.findProjectionsByUsername("m1", UsernameOnlyDto.class);
+//
+//        for (UsernameOnlyDto usernameOnly : result) {
+//            System.out.println("usernameOnly = " + usernameOnly.getUsername());
+//        }
+        /**
+         * 주의 *
+         * 프로젝션 대상이 root 엔티티면, JPQL SELECT 절 최적화 가능
+         * 프로젝션 대상이 ROOT 가 아니면
+         *  - LEFT OUTER JOIN 처리
+         *  - 모든 필드를 SELECT 해서 엔티티로 조회한 다음에 계산
+
+         * 정리 *
+         * 프로젝션 대상이 root 엔티티면 유용하다.
+         * 프로젝션 대상이 root 엔티티를 넘어가면 JPQL SELECT 최적화가 안된다!
+         * 실무의 복잡한 쿼리를 해결하기에는 한계가 있다
+         * 실무에서는 단순할 때만 사용하고 조금만 복잡해지면 QueryDSL을 사용하자
+         */
+        List<NestedClosedProjections> result = memberRepository.findProjectionsByUsername("m1", NestedClosedProjections.class);
+
+        for (NestedClosedProjections nestedClosedProjections : result) {
+            String username = nestedClosedProjections.getUsername();
+            System.out.println("username = " + username);
+            String teamName = nestedClosedProjections.getTeam().getName();
+            System.out.println("teamName = " + teamName);
+        }
+    }
 }
